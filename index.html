@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W-Studio</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f4f6fa;
+    --border: #e2e8f0;
+    --text: #0d1117;
+    --text-muted: #64748b;
+    --accent: #2563EB;
+    --accent-hover: #1d4ed8;
+    --accent-light: rgba(37,99,235,0.08);
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 20px; }
+  .page.active { display: block; }
+
+  /* ========== PORTFOLIO ========== */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .portfolio-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .portfolio-card:active { transform: scale(0.97); }
+  .portfolio-thumb {
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: rgba(1,75,170,0.15);
+    font-family: Georgia, serif;
+    font-style: italic;
+  }
+  .portfolio-card-info { padding: 10px 12px; }
+  .portfolio-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .portfolio-card-tag { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ========== PRICE ========== */
+  .price-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 16px 0 10px;
+  }
+  .price-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg);
+    position: relative;
+  }
+  .price-item.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .price-item-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .price-item.selected .price-item-check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .price-item.selected .price-item-check::after {
+    content: '';
+    width: 8px;
+    height: 5px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+  .price-item-body { flex: 1; }
+  .price-item-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .price-item-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .price-item-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .calc-total {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .calc-total-label { font-size: 13px; opacity: 0.85; }
+  .calc-total-amount { font-size: 20px; font-weight: 700; }
+
+  /* ========== BRIEF (FORM) ========== */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea { resize: none; height: 90px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 13px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .chip.active {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* BOTTOM BUTTON */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 20px 24px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .btn-main {
+    width: 100%;
+    padding: 15px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+  .btn-main:active { opacity: 0.85; }
+  .btn-main:disabled { opacity: 0.4; }
+
+  /* SUCCESS */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+  }
+  .success-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .success-sub { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+  /* Telegram dark theme support */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1f2e;
+      --border: #2a3144;
+      --text: #e8edf5;
+      --text-muted: #8892a4;
+      --accent: #3b82f6;
+      --accent-light: rgba(59,130,246,0.12);
+    }
+    .form-input, .form-select, .form-textarea { color: #e8edf5; background: #1a1f2e; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><span style="color:var(--accent)">W</span>-Studio.</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('portfolio')">Портфолио</button>
+  <button class="tab" onclick="switchTab('price')">Прайс</button>
+  <button class="tab" onclick="switchTab('brief')">Заявка</button>
+</div>
+
+<!-- ========== PORTFOLIO ========== -->
+<div class="page active" id="page-portfolio">
+  <div style="margin-bottom:14px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Наши работы</div>
+    <div style="font-size:13px;color:var(--text-muted)">Бренды, интерфейсы, визуальные системы</div>
+  </div>
+  <div class="portfolio-grid">
+    <div class="portfolio-card" onclick="openProject('Бренд-идентичность','Логотип, гайдлайн и фирменный стиль для технологического стартапа.','#dbeafe')">
+      <div class="portfolio-thumb" style="background:#dbeafe">Aa</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">TechBrand</div>
+        <div class="portfolio-card-tag">Бренд-идентичность</div>
+      </div>
+    </div>
+    <div class="portfolio-card" onclick="openProject('UI/UX Дизайн','Дизайн мобильного приложения для финтех-компании. 60+ экранов.','#dcfce7')">
+      <div class="portfolio-thumb" style="background:#dcfce7">UI</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">FinApp</div>
+        <div class="portfolio-card-tag">UI/UX дизайн</div>
+      </div>
+    </div>
+    <div class="portfolio-card" onclick="openProject('Упаковка','Дизайн линейки упаковки для косметического бренда.','#fef3c7')">
+      <div class="portfolio-thumb" style="background:#fef3c7">Pkg</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">BeautyLine</div>
+        <div class="portfolio-card-tag">Упаковка</div>
+      </div>
+    </div>
+    <div class="portfolio-card" onclick="openProject('Веб-дизайн','Корпоративный сайт с дизайн-системой и анимациями.','#f3e8ff')">
+      <div class="portfolio-thumb" style="background:#f3e8ff">Web</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">CorpSite</div>
+        <div class="portfolio-card-tag">Веб-дизайн</div>
+      </div>
+    </div>
+    <div class="portfolio-card" onclick="openProject('Презентация','Investor deck для стартапа. 24 слайда, анимации, инфографика.','#fee2e2')">
+      <div class="portfolio-thumb" style="background:#fee2e2">PPT</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">StartupDeck</div>
+        <div class="portfolio-card-tag">Презентация</div>
+      </div>
+    </div>
+    <div class="portfolio-card" onclick="openProject('3D-визуализация','Рекламная визуализация продукта для косметики.','#ccfbf1')">
+      <div class="portfolio-thumb" style="background:#ccfbf1">3D</div>
+      <div class="portfolio-card-info">
+        <div class="portfolio-card-title">Product3D</div>
+        <div class="portfolio-card-tag">3D / Рендер</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PRICE ========== -->
+<div class="page" id="page-price">
+  <div style="margin-bottom:4px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Калькулятор</div>
+    <div style="font-size:13px;color:var(--text-muted)">Выберите услуги — посчитаем стоимость</div>
+  </div>
+
+  <div class="price-section-title">Брендинг</div>
+  <div class="price-item" onclick="toggleService(this, 14000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Логотип + айдентика</div>
+      <div class="price-item-desc">Логотип, цвета, шрифты, базовый гайдлайн</div>
+    </div>
+    <div class="price-item-price">от 14 000 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 80000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Полный брендбук</div>
+      <div class="price-item-desc">Полная система с носителями и гайдлайном</div>
+    </div>
+    <div class="price-item-price">от 80 000 ₽</div>
+  </div>
+
+  <div class="price-section-title">Цифровой дизайн</div>
+  <div class="price-item" onclick="toggleService(this, 15000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">UI/UX дизайн</div>
+      <div class="price-item-desc">Веб или мобайл, до 20 экранов</div>
+    </div>
+    <div class="price-item-price">от 15 000 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 10000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Лендинг</div>
+      <div class="price-item-desc">Одностраничный сайт под ключ</div>
+    </div>
+    <div class="price-item-price">от 10 000 ₽</div>
+  </div>
+
+  <div class="price-section-title">Графика и медиа</div>
+  <div class="price-item" onclick="toggleService(this, 5000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Презентация</div>
+      <div class="price-item-desc">Pitch, investor, корпоративная</div>
+    </div>
+    <div class="price-item-price">от 5 000 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 6500)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Упаковка</div>
+      <div class="price-item-desc">Этикетка, коробка, пакет</div>
+    </div>
+    <div class="price-item-price">от 6 500 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 3000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">3D-визуализация</div>
+      <div class="price-item-desc">Продукт, упаковка, пространство</div>
+    </div>
+    <div class="price-item-price">от 3 000 ₽</div>
+  </div>
+
+  <div class="price-section-title">Разработка</div>
+  <div class="price-item" onclick="toggleService(this, 15000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Telegram-бот</div>
+      <div class="price-item-desc">Бот под ключ: заявки, каталог, рассылка</div>
+    </div>
+    <div class="price-item-price">от 15 000 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 18500)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Telegram Mini App</div>
+      <div class="price-item-desc">Мини-апп с дизайном и логикой</div>
+    </div>
+    <div class="price-item-price">от 18 500 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 15000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Discord-бот</div>
+      <div class="price-item-desc">Модерация, роли, авто-команды, интеграции</div>
+    </div>
+    <div class="price-item-price">от 15 000 ₽</div>
+  </div>
+  <div class="price-item" onclick="toggleService(this, 45000)">
+    <div class="price-item-check"></div>
+    <div class="price-item-body">
+      <div class="price-item-name">Веб-приложение</div>
+      <div class="price-item-desc">React/Next.js, API-интеграции, деплой</div>
+    </div>
+    <div class="price-item-price">от 45 000 ₽</div>
+  </div>
+
+  <div class="calc-total">
+    <div>
+      <div class="calc-total-label">Итого выбрано</div>
+      <div style="font-size:12px;opacity:0.7;margin-top:2px" id="selected-count">Ничего не выбрано</div>
+    </div>
+    <div class="calc-total-amount" id="total-price">0 ₽</div>
+  </div>
+</div>
+
+<!-- ========== BRIEF ========== -->
+<div class="page" id="page-brief">
+  <div style="margin-bottom:16px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Заявка</div>
+    <div style="font-size:13px;color:var(--text-muted)">Расскажите о задаче — ответим в течение часа</div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Ваше имя</label>
+    <input class="form-input" id="name" type="text" placeholder="Как вас зовут?">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Тип проекта</label>
+    <div class="chips" id="chips-type">
+      <button class="chip" onclick="toggleChip(this,'type')">Брендинг</button>
+      <button class="chip" onclick="toggleChip(this,'type')">UI/UX</button>
+      <button class="chip" onclick="toggleChip(this,'type')">Веб-сайт</button>
+      <button class="chip" onclick="toggleChip(this,'type')">Презентация</button>
+      <button class="chip" onclick="toggleChip(this,'type')">Упаковка</button>
+      <button class="chip" onclick="toggleChip(this,'type')">3D</button>
+      <button class="chip" onclick="toggleChip(this,'type')">Бот / Разработка</button>
+      <button class="chip" onclick="toggleChip(this,'type')">Другое</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Бюджет</label>
+    <div class="chips" id="chips-budget">
+      <button class="chip" onclick="toggleChip(this,'budget')">до 30 000 ₽</button>
+      <button class="chip" onclick="toggleChip(this,'budget')">30–80 000 ₽</button>
+      <button class="chip" onclick="toggleChip(this,'budget')">80–200 000 ₽</button>
+      <button class="chip" onclick="toggleChip(this,'budget')">от 200 000 ₽</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Сроки</label>
+    <select class="form-select" id="deadline">
+      <option value="">Выберите срок</option>
+      <option>Срочно (до 2 недель)</option>
+      <option>1 месяц</option>
+      <option>1–3 месяца</option>
+      <option>Не горит, обсудим</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Описание задачи</label>
+    <textarea class="form-textarea" id="description" placeholder="Расскажите о проекте: что нужно сделать, для какой аудитории, есть ли референсы..."></textarea>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-screen" id="success">
+  <div class="success-icon">✓</div>
+  <div class="success-title">Заявка отправлена!</div>
+  <div class="success-sub">Мы получили вашу заявку и свяжемся с вами в ближайшее время.<br><br>W-Studio</div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar" id="bottom-bar">
+  <button class="btn-main" id="main-btn" onclick="handleMainBtn()">Связаться с нами</button>
+</div>
+
+<script>
+  // Init Telegram WebApp
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    // Apply Telegram theme colors if available
+    if (tg.colorScheme === 'dark') {
+      document.documentElement.style.setProperty('--bg', '#0f1117');
+      document.documentElement.style.setProperty('--surface', '#1a1f2e');
+      document.documentElement.style.setProperty('--border', '#2a3144');
+      document.documentElement.style.setProperty('--text', '#e8edf5');
+      document.documentElement.style.setProperty('--text-muted', '#8892a4');
+      document.documentElement.style.setProperty('--accent', '#3b82f6');
+    }
+  }
+
+  let currentTab = 'portfolio';
+  let totalPrice = 0;
+  let selectedServices = [];
+  let selectedType = '';
+  let selectedBudget = '';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t,i) => {
+      t.classList.toggle('active', ['portfolio','price','brief'][i] === tab);
+    });
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + tab).classList.add('active');
+    currentTab = tab;
+    updateBtn();
+  }
+
+  function updateBtn() {
+    const btn = document.getElementById('main-btn');
+    if (currentTab === 'portfolio') btn.textContent = 'Обсудить проект →';
+    else if (currentTab === 'price') {
+      btn.textContent = totalPrice > 0
+        ? `Заказать выбранное (${formatPrice(totalPrice)})`
+        : 'Выберите услуги';
+      btn.disabled = totalPrice === 0;
+    }
+    else if (currentTab === 'brief') btn.textContent = 'Отправить заявку';
+    btn.disabled = currentTab === 'price' && totalPrice === 0;
+  }
+
+  function formatPrice(n) {
+    return n.toLocaleString('ru') + ' ₽';
+  }
+
+  function toggleService(el, price) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) {
+      totalPrice += price;
+      selectedServices.push(el.querySelector('.price-item-name').textContent);
+    } else {
+      totalPrice -= price;
+      const name = el.querySelector('.price-item-name').textContent;
+      selectedServices = selectedServices.filter(s => s !== name);
+    }
+    document.getElementById('total-price').textContent = formatPrice(totalPrice);
+    const count = selectedServices.length;
+    document.getElementById('selected-count').textContent =
+      count > 0 ? `${count} услуг${count===1?'а':count<5?'и':''}` : 'Ничего не выбрано';
+    updateBtn();
+  }
+
+  function toggleChip(el, group) {
+    // For budget — single select
+    if (group === 'budget') {
+      document.querySelectorAll('#chips-budget .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      selectedBudget = el.textContent;
+    } else {
+      el.classList.toggle('active');
+      selectedType = Array.from(document.querySelectorAll('#chips-type .chip.active'))
+        .map(c => c.textContent).join(', ');
+    }
+  }
+
+  function openProject(title, desc, bg) {
+    if (tg && tg.showPopup) {
+      tg.showPopup({
+        title: title,
+        message: desc,
+        buttons: [
+          { id: 'order', type: 'default', text: 'Заказать похожее' },
+          { id: 'close', type: 'cancel', text: 'Закрыть' }
+        ]
+      }, (btnId) => {
+        if (btnId === 'order') switchTab('brief');
+      });
+    } else {
+      alert(title + '\n\n' + desc);
+    }
+  }
+
+  function handleMainBtn() {
+    if (currentTab === 'portfolio' || currentTab === 'price') {
+      switchTab('brief');
+      if (currentTab === 'price' && selectedServices.length > 0) {
+        // Pre-fill description
+        document.getElementById('description').value =
+          'Хочу заказать: ' + selectedServices.join(', ');
+      }
+      return;
+    }
+
+    // Send brief
+    const name = document.getElementById('name').value.trim();
+    const deadline = document.getElementById('deadline').value;
+    const description = document.getElementById('description').value.trim();
+
+    if (!name) {
+      if (tg && tg.showAlert) tg.showAlert('Пожалуйста, введите ваше имя');
+      else alert('Введите имя');
+      return;
+    }
+
+    const data = {
+      name,
+      type: selectedType || 'Не указан',
+      budget: selectedBudget || 'Не указан',
+      deadline: deadline || 'Не указан',
+      description: description || 'Не указано',
+      services: selectedServices
+    };
+
+    // Send via Telegram Bot API
+    // Get Telegram user info — надёжное чтение
+    let tgUser = {};
+    try {
+      const w = window.Telegram || {};
+      const wa = w.WebApp || {};
+      const unsafe = wa.initDataUnsafe || (tg && tg.initDataUnsafe) || {};
+      tgUser = unsafe.user || {};
+    } catch(e) {}
+    const tgUsername = tgUser.username ? '@' + tgUser.username : '—';
+    const tgFirstName = tgUser.first_name || '';
+    const tgLastName = tgUser.last_name || '';
+    const tgFullName = [tgFirstName, tgLastName].filter(Boolean).join(' ') || '—';
+    const tgId = tgUser.id ? String(tgUser.id) : '—';
+
+    const text = `📬 Новая заявка с W-Studio Mini App
+
+👤 Имя: ${data.name}
+🎨 Тип проекта: ${data.type}
+💰 Бюджет: ${data.budget}
+⏱ Сроки: ${data.deadline}
+📝 Описание: ${data.description}${data.services.length > 0 ? '\n🛒 Услуги из калькулятора: ' + data.services.join(', ') : ''}
+
+─────────────────
+📱 Telegram-профиль:
+• Имя: ${tgFullName}
+• Username: ${tgUsername}
+• ID: ${tgId}`;
+
+    fetch('https://api.telegram.org/bot8839982932:AAFriiPb2isImLztC7IvG2qOzY1OPy-F3zE/sendMessage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        chat_id: '8717222448',
+        text: text,
+        parse_mode: 'HTML'
+      })
+    }).catch(e => console.log('Send error:', e));
+
+    if (tg && tg.sendData) {
+      try { tg.sendData(JSON.stringify(data)); } catch(e) {}
+    }
+
+    // Show success
+    document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.tabs, .header').forEach(el => el.style.display = 'none');
+    document.getElementById('bottom-bar').style.display = 'none';
+    document.getElementById('success').style.display = 'block';
+    if (tg && tg.close) setTimeout(() => tg.close(), 3000);
+  }
+
+  updateBtn();
+</script>
+</body>
+</html>
