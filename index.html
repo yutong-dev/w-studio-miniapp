@@ -898,10 +898,13 @@
       });
   }
 
-  // Builds URL with all params safely encoded to survive Apps Script redirect
+  // Builds URL: action as separate param, rest encoded as payload
   function gasUrl(action, params) {
-    const payload = Object.assign({ action: action }, params);
-    return SHEET_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
+    let url = SHEET_URL + '?action=' + encodeURIComponent(action);
+    if (params && Object.keys(params).length > 0) {
+      url += '&payload=' + encodeURIComponent(JSON.stringify(params));
+    }
+    return url;
   }
 
 
